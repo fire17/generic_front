@@ -65,31 +65,53 @@
   <script>
     const backendUrl = "https://backend.akeyo.io"; // Replace with your backend URL
 
+    // Function to fetch todos from the backend
     async function fetchTodos() {
-      const response = await fetch(`${backendUrl}/todos`);
+      const urlParams = new URLSearchParams(window.location.search);
+      const path = urlParams.get('path');
+      const response = await fetch(`${backendUrl}?path=${path}&_method=GET`);
       const todos = await response.json();
+      displayTodos(todos);
+    }
+
+    // Function to display todos in the UI
+    function displayTodos(todos) {
       const todoList = document.getElementById("todo-list");
-      todoList.innerHTML = "";
+      todoList.innerHTML = ''; // Clear the existing list
       todos.forEach(todo => {
         const li = document.createElement("li");
+        li.className = "todo-item";
         li.textContent = todo.text;
         todoList.appendChild(li);
       });
     }
 
+    // Function to add a todo
     async function addTodo() {
-      const newTodo = document.getElementById("new-todo").value;
-      if (!newTodo) return alert("Please enter a todo.");
-      await fetch(`${backendUrl}/todos`, {
+      const input = document.getElementById("todo-input");
+      const text = input.value.trim();
+      if (text === "") return;
+
+      const urlParams = new URLSearchParams(window.location.search);
+      const path = urlParams.get('path');
+      const response = await fetch(`${backendUrl}?path=${path}&_method=POST`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: newTodo }),
+        body: JSON.stringify({ text }),
+        headers: {
+          "Content-Type": "application/json"
+        }
       });
-      document.getElementById("new-todo").value = "";
-      fetchTodos();
+      const result = await response.json();
+      if (result.success) {
+        fetchTodos(); // Refresh the list
+      }
+      input.value = ''; // Clear the input field
     }
 
-    fetchTodos();
+    // Fetch todos when the page loads
+    window.onload = function() {
+      fetchTodos();
+    };
   </script>
 </body>
 </html>
