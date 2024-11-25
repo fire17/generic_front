@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Secure App</title>
+  <script src="frontend.js" defer></script>
+</head>
+<body>
+  <h1>Secure App</h1>
+
+  <!-- Authentication Section -->
+  <div id="auth">
+    <h2>Login / Signup</h2>
+    <input type="text" id="username" placeholder="Username" required>
+    <input type="password" id="password" placeholder="Password" required>
+    <input type="password" id="confirmPassword" placeholder="Confirm Password" style="display:none;">
+    <button id="signup">Signup</button>
+    <button id="login">Login</button>
+    <p id="error" style="color: red;"></p>
+  </div>
+
+  <!-- App Section -->
+  <div id="app" style="display:none;">
+    <h2>Welcome, <span id="currentUser"></span>!</h2>
+    <p id="metadata"></p>
+    <button id="logout">Logout</button>
+
+    <h3>Todos</h3>
+    <ul id="todos"></ul>
+    <input type="text" id="newTodo" placeholder="New Todo">
+    <button id="addTodo">Add Todo</button>
+    <p id="todoError" style="color: red;"></p>
+  </div>
+</body>
+</html>
