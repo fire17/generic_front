@@ -190,7 +190,7 @@
 
         async function loadTodos() {
             try {
-                const response = await fetch(`${API_URL}/todos`, {
+                const response = await fetch(`${API_URL}`, {
                     mode: 'no-cors',
                     headers: {
                         'Accept': 'application/json'
@@ -235,7 +235,7 @@
             }
 
             try {
-                await fetch(`${API_URL}/todos`, {
+                await fetch(`${API_URL}`, {
                     method: 'POST',
                     mode: 'no-cors',
                     headers: {
@@ -258,7 +258,7 @@
             if (newText === null) return;
 
             try {
-                await fetch(`${API_URL}/todos/${id}`, {
+                await fetch(`${API_URL}/${id}`, {
                     method: 'PUT',
                     mode: 'no-cors',
                     headers: {
@@ -279,7 +279,7 @@
             if (!confirm('Are you sure you want to delete this todo?')) return;
 
             try {
-                await fetch(`${API_URL}/todos/${id}`, {
+                await fetch(`${API_URL}/${id}`, {
                     method: 'DELETE',
                     mode: 'no-cors',
                     headers: {
