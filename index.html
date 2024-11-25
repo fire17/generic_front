@@ -190,7 +190,7 @@
 
         async function loadTodos() {
             try {
-                const response = await fetch(`${BACKEND_URL}/todos`);
+                const response = await fetch(`${BACKEND_URL}`);
                 const todos = await response.json();
                 displayTodos(todos);
             } catch (error) {
@@ -228,7 +228,7 @@
             }
 
             try {
-                const response = await fetch(`${BACKEND_URL}/todos`, {
+                const response = await fetch(`${BACKEND_URL}`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -253,7 +253,7 @@
             if (newText === null) return;
 
             try {
-                const response = await fetch(`${BACKEND_URL}/todos/${id}`, {
+                const response = await fetch(`${BACKEND_URL}/${id}`, {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json',
@@ -276,7 +276,7 @@
             if (!confirm('Are you sure you want to delete this todo?')) return;
 
             try {
-                const response = await fetch(`${BACKEND_URL}/todos/${id}`, {
+                const response = await fetch(`${BACKEND_URL}/${id}`, {
                     method: 'DELETE'
                 });
 
