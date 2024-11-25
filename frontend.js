@@ -1,4 +1,4 @@
-const API_URL = 'https://my-backend.github.io'; // Replace with your backend GitHub Pages URL
+const API_URL = 'https://backend.akeyo.io'; // Replace with your backend GitHub Pages URL
 let currentUser = null;
 let token = null;
 
