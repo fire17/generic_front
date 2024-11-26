@@ -171,7 +171,9 @@
 
         window.onload = () => {
             apiFrame = document.getElementById('api-frame');
-            loadTodos();
+            apiFrame.onload = () => {
+                loadTodos();
+            };
         };
 
         function setLoading(loading) {
@@ -179,7 +181,7 @@
             document.getElementById('loading').classList.toggle('hidden', !loading);
         }
 
-        function makeRequest(params) {
+        function makeRequest(data) {
             return new Promise((resolve, reject) => {
                 const handler = (event) => {
                     if (event.origin === 'https://backend.akeyo.io') {
@@ -193,8 +195,7 @@
                 };
 
                 window.addEventListener('message', handler);
-                apiFrame.contentWindow.postMessage('request', 'https://backend.akeyo.io');
-                apiFrame.src = `https://backend.akeyo.io#${new URLSearchParams(params)}`;
+                apiFrame.contentWindow.postMessage(data, 'https://backend.akeyo.io');
             });
         }
 
@@ -205,18 +206,22 @@
                 const todoList = document.getElementById('todo-list');
                 todoList.innerHTML = '';
                 
-                todos.forEach(todo => {
-                    const div = document.createElement('div');
-                    div.className = `todo-item ${todo.completed ? 'completed' : ''}`;
-                    div.innerHTML = `
-                        <input type="checkbox" ${todo.completed ? 'checked' : ''} 
-                            onchange="updateTodo(${todo.id}, this.checked)">
-                        <span>${todo.text}</span>
-                        <button onclick="editTodo(${todo.id}, '${todo.text}')">Edit</button>
-                        <button onclick="deleteTodo(${todo.id})">Delete</button>
-                    `;
-                    todoList.appendChild(div);
-                });
+                if (Array.isArray(todos)) {
+                    todos.forEach(todo => {
+                        const div = document.createElement('div');
+                        div.className = `todo-item ${todo.completed ? 'completed' : ''}`;
+                        div.innerHTML = `
+                            <input type="checkbox" ${todo.completed ? 'checked' : ''} 
+                                onchange="updateTodo(${todo.id}, this.checked)">
+                            <span>${todo.text}</span>
+                            <button onclick="editTodo(${todo.id}, '${todo.text}')">Edit</button>
+                            <button onclick="deleteTodo(${todo.id})">Delete</button>
+                        `;
+                        todoList.appendChild(div);
+                    });
+                } else {
+                    console.error('Received invalid todos data:', todos);
+                }
             } catch (error) {
                 console.error('Error loading todos:', error);
             } finally {
@@ -245,7 +250,11 @@
         async function updateTodo(id, completed) {
             try {
                 setLoading(true);
-                await makeRequest({ action: 'updateTodo', id: id.toString(), completed: completed.toString() });
+                await makeRequest({ 
+                    action: 'updateTodo', 
+                    id: id.toString(), 
+                    completed: completed.toString() 
+                });
                 await loadTodos();
             } catch (error) {
                 console.error('Error updating todo:', error);
@@ -259,7 +268,11 @@
             if (newText && newText !== currentText) {
                 try {
                     setLoading(true);
-                    await makeRequest({ action: 'updateTodo', id: id.toString(), text: newText });
+                    await makeRequest({ 
+                        action: 'updateTodo', 
+                        id: id.toString(), 
+                        text: newText 
+                    });
                     await loadTodos();
                 } catch (error) {
                     console.error('Error editing todo:', error);
