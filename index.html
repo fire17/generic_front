@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Glassmorphic Todo App</title>
     <style>
-        /* Glassmorphic theme */
         body {
             font-family: Arial, sans-serif;
             background: linear-gradient(135deg, rgba(58,123,213,1) 0%, rgba(58,96,214,0.8) 100%);
@@ -70,52 +69,41 @@
     <script>
         const apiUrl = 'https://backend.akeyo.io/index.html'; // Simulated backend
 
-        const todos = []; // Local mock todos
         const todoList = document.getElementById('todoList');
         const todoForm = document.getElementById('todoForm');
         const todoInput = document.getElementById('todoInput');
 
-        // Fetch todos (simulated API call)
+        // Fetch todos
         async function fetchTodos() {
             console.log("Fetching todos from backend...");
-            const response = await fetch(`${apiUrl}?action=getTodos`);
-            const data = await response.json();
-            todos.push(...data);
-            renderTodos();
+            const response = await fetch(`${apiUrl}?action=getTodos&callback=jsonpHandler`, { mode: 'no-cors' });
+            const script = document.createElement('script');
+            script.src = `${apiUrl}?action=getTodos&callback=jsonpHandler`;
+            document.body.appendChild(script);
+        }
+
+        // JSONP handler
+        function jsonpHandler(data) {
+            console.log("Todos fetched:", data);
+            renderTodos(data);
         }
 
         // Add new todo
-        async function addTodo(todoText) {
+        function addTodo(todoText) {
             console.log(`Adding new todo: ${todoText}`);
-            const response = await fetch(`${apiUrl}?action=addTodo`, {
-                method: 'POST',
-                body: JSON.stringify({ text: todoText }),
-            });
-            const result = await response.json();
-            console.log("Todo added:", result);
-            todos.push(result);
-            renderTodos();
-        }
-
-        // Remove todo
-        async function removeTodo(index) {
-            console.log(`Removing todo at index: ${index}`);
-            const response = await fetch(`${apiUrl}?action=removeTodo&index=${index}`, { method: 'DELETE' });
-            const result = await response.json();
-            console.log("Todo removed:", result);
-            todos.splice(index, 1);
-            renderTodos();
+            const script = document.createElement('script');
+            script.src = `${apiUrl}?action=addTodo&text=${encodeURIComponent(todoText)}&callback=jsonpHandler`;
+            document.body.appendChild(script);
         }
 
         // Render todos
-        function renderTodos() {
+        function renderTodos(todos) {
             todoList.innerHTML = '';
             todos.forEach((todo, index) => {
                 const li = document.createElement('li');
                 li.className = 'todo-item';
                 li.innerHTML = `
                     <span>${todo.text}</span>
-                    <button class="btn" onclick="removeTodo(${index})">Delete</button>
                 `;
                 todoList.appendChild(li);
             });
