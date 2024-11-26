@@ -3,47 +3,164 @@
 <head>
     <title>Todo App</title>
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 40px 20px;
+            color: #fff;
+        }
+
+        .container {
             max-width: 800px;
             margin: 0 auto;
-            padding: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+            border: 1px solid rgba(255, 255, 255, 0.18);
         }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            font-weight: 600;
+            font-size: 2.5em;
+            color: #fff;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        #todo-form {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.15);
+            color: #fff;
+            font-size: 1em;
+            backdrop-filter: blur(5px);
+        }
+
+        input[type="text"]::placeholder {
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        button {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.2);
+            color: #fff;
+            font-size: 1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(5px);
+        }
+
+        button:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+
         .todo-item {
             display: flex;
             align-items: center;
-            padding: 10px;
-            border-bottom: 1px solid #eee;
+            padding: 15px;
+            margin-bottom: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            transition: all 0.3s ease;
         }
+
+        .todo-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .todo-item input[type="checkbox"] {
+            margin-right: 15px;
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+
+        .todo-item span {
+            flex: 1;
+            font-size: 1.1em;
+        }
+
         .todo-item button {
+            padding: 8px 15px;
             margin-left: 10px;
+            font-size: 0.9em;
         }
+
+        .todo-item.completed span {
+            text-decoration: line-through;
+            opacity: 0.7;
+        }
+
+        #loading {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(5px);
+            border-radius: 10px;
+            color: #fff;
+            font-size: 0.9em;
+        }
+
         .hidden {
             display: none;
         }
-        #loading {
-            position: fixed;
-            top: 10px;
-            right: 10px;
-            padding: 10px;
-            background: #fff3cd;
-            border: 1px solid #ffeeba;
-            border-radius: 4px;
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px;
+            }
+            
+            #todo-form {
+                flex-direction: column;
+            }
+            
+            .todo-item {
+                flex-wrap: wrap;
+            }
+            
+            .todo-item button {
+                margin-top: 10px;
+            }
         }
     </style>
 </head>
 <body>
-    <h1>Todo App</h1>
-    
-    <div id="loading" class="hidden">Loading...</div>
+    <div class="container">
+        <h1>Todo App</h1>
+        
+        <div id="loading" class="hidden">Loading...</div>
 
-    <div id="todo-form">
-        <input type="text" id="new-todo" placeholder="Add a new todo">
-        <button onclick="addTodo()">Add</button>
-    </div>
+        <div id="todo-form">
+            <input type="text" id="new-todo" placeholder="Add a new todo">
+            <button onclick="addTodo()">Add Task</button>
+        </div>
 
-    <div id="todo-list">
-        <!-- Todos will be inserted here -->
+        <div id="todo-list">
+            <!-- Todos will be inserted here -->
+        </div>
     </div>
 
     <iframe id="api-frame" src="https://backend.akeyo.io" style="display: none;"></iframe>
@@ -52,19 +169,16 @@
         let apiFrame;
         let isLoading = false;
 
-        // Initialize the application
         window.onload = () => {
             apiFrame = document.getElementById('api-frame');
             loadTodos();
         };
 
-        // Show/hide loading indicator
         function setLoading(loading) {
             isLoading = loading;
             document.getElementById('loading').classList.toggle('hidden', !loading);
         }
 
-        // Make API request
         function makeRequest(params) {
             return new Promise((resolve, reject) => {
                 const handler = (event) => {
@@ -84,7 +198,6 @@
             });
         }
 
-        // Load all todos
         async function loadTodos() {
             try {
                 setLoading(true);
@@ -94,7 +207,7 @@
                 
                 todos.forEach(todo => {
                     const div = document.createElement('div');
-                    div.className = 'todo-item';
+                    div.className = `todo-item ${todo.completed ? 'completed' : ''}`;
                     div.innerHTML = `
                         <input type="checkbox" ${todo.completed ? 'checked' : ''} 
                             onchange="updateTodo(${todo.id}, this.checked)">
@@ -105,13 +218,12 @@
                     todoList.appendChild(div);
                 });
             } catch (error) {
-                alert('Error loading todos: ' + error.message);
+                console.error('Error loading todos:', error);
             } finally {
                 setLoading(false);
             }
         }
 
-        // Add new todo
         async function addTodo() {
             const input = document.getElementById('new-todo');
             const text = input.value.trim();
@@ -124,26 +236,24 @@
                 input.value = '';
                 await loadTodos();
             } catch (error) {
-                alert('Error adding todo: ' + error.message);
+                console.error('Error adding todo:', error);
             } finally {
                 setLoading(false);
             }
         }
 
-        // Update todo status
         async function updateTodo(id, completed) {
             try {
                 setLoading(true);
                 await makeRequest({ action: 'updateTodo', id: id.toString(), completed: completed.toString() });
                 await loadTodos();
             } catch (error) {
-                alert('Error updating todo: ' + error.message);
+                console.error('Error updating todo:', error);
             } finally {
                 setLoading(false);
             }
         }
 
-        // Edit todo text
         async function editTodo(id, currentText) {
             const newText = prompt('Edit todo:', currentText);
             if (newText && newText !== currentText) {
@@ -152,14 +262,13 @@
                     await makeRequest({ action: 'updateTodo', id: id.toString(), text: newText });
                     await loadTodos();
                 } catch (error) {
-                    alert('Error editing todo: ' + error.message);
+                    console.error('Error editing todo:', error);
                 } finally {
                     setLoading(false);
                 }
             }
         }
 
-        // Delete todo
         async function deleteTodo(id) {
             if (confirm('Are you sure you want to delete this todo?')) {
                 try {
@@ -167,12 +276,19 @@
                     await makeRequest({ action: 'deleteTodo', id: id.toString() });
                     await loadTodos();
                 } catch (error) {
-                    alert('Error deleting todo: ' + error.message);
+                    console.error('Error deleting todo:', error);
                 } finally {
                     setLoading(false);
                 }
             }
         }
+
+        // Add keyboard support for adding todos
+        document.getElementById('new-todo').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                addTodo();
+            }
+        });
     </script>
 </body>
 </html>
