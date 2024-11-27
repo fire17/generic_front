@@ -1,120 +1,42 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Todo App</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 0;
-      padding: 0;
-      height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: linear-gradient(45deg, rgba(255, 99, 71, 0.5), rgba(135, 206, 235, 0.5));
-      backdrop-filter: blur(10px);
-    }
-    #app {
-      width: 90%;
-      max-width: 400px;
-      background: rgba(255, 255, 255, 0.8);
-      border-radius: 20px;
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-      padding: 20px;
-    }
-    #log, #todos, #monitor {
-      background: rgba(255, 255, 255, 0.6);
-      margin: 10px 0;
-      border-radius: 10px;
-      padding: 10px;
-      overflow-y: auto;
-      max-height: 150px;
-      border: 1px solid rgba(255, 255, 255, 0.2);
-    }
-    form input, form button {
-      width: 100%;
-      padding: 10px;
-      margin: 5px 0;
-      border-radius: 10px;
-      border: none;
-      outline: none;
-    }
-    form button {
-      background: linear-gradient(45deg, #ff6347, #87ceeb);
-      color: white;
-      cursor: pointer;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DXOS Client</title>
 </head>
 <body>
-  <div id="app">
-    <div id="todos"></div>
-    <form id="loginForm">
-      <input type="text" id="username" placeholder="Username" required />
-      <input type="password" id="password" placeholder="Password" required />
-      <button type="submit">Login</button>
-    </form>
-    <div id="monitor"></div>
-    <div id="log"></div>
-  </div>
-  <script type="module">
-    import dxosClientServices from 'https://cdn.jsdelivr.net/npm/@dxos/client-services@0.7.1/+esm';
+    <h1>DXOS Client</h1>
+    <button id="connectBtn">Connect to Server</button>
+    <div id="message"></div>
 
-    const backendURL = "https://backend.akeyo.io";
-    const dxosClient = await dxosClientServices();
-    await dxosClient.initialize();
-    const dxosLog = dxosClient.getLogger('frontend');
+    <script type="module">
+        import dxosClientServices from 'https://cdn.jsdelivr.net/npm/@dxos/client-services@0.7.1/+esm';
 
-    const log = (message) => {
-      const logElement = document.getElementById("log");
-      logElement.innerHTML += `<div>${message}</div>`;
-      logElement.scrollTop = logElement.scrollHeight;
-    };
+        const { createSpace, joinSpace, createDocument, subscribeDocuments } = dxosClientServices;
 
-    const fetchBackend = async (endpoint, params = {}) => {
-      try {
-        const url = new URL(backendURL);
-        url.search = new URLSearchParams({ endpoint, ...params }).toString();
+        let clientSpace;
 
-        const response = await fetch(url);
-        const data = await response.json();
+        async function connectToServer() {
+            try {
+                clientSpace = await createSpace();
+                const invitation = await fetch('https://backend.akeyo.io/invitation');
+                const invitationCode = await invitation.text();
+                
+                await joinSpace(clientSpace, invitationCode);
+                
+                subscribeDocuments(clientSpace, (docs) => {
+                    const helloDoc = docs.find(doc => doc.type === 'hello');
+                    if (helloDoc) {
+                        document.getElementById('message').textContent = helloDoc.content;
+                    }
+                });
+            } catch (error) {
+                console.error('Error connecting to server:', error);
+            }
+        }
 
-        log(`Endpoint: ${endpoint}, Response: ${JSON.stringify(data)}`);
-        return data;
-      } catch (error) {
-        log(`Error: ${error.message}`);
-        return null;
-      }
-    };
-
-    const loadPublicTodos = async () => {
-      const response = await fetchBackend("publicTodos");
-      if (response && response.success) {
-        const todosElement = document.getElementById("todos");
-        todosElement.innerHTML = response.todos
-          .map(todo => `<div>${todo.task} - ${todo.done ? "✔" : "✘"}</div>`)
-          .join("");
-      }
-    };
-
-    document.getElementById("loginForm").addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const username = document.getElementById("username").value;
-      const password = document.getElementById("password").value;
-
-      const loginResponse = await fetchBackend("login", { username, password });
-      if (loginResponse && loginResponse.success) {
-        const todosResponse = await fetchBackend("todos", { userId: loginResponse.user.id });
-        const todosElement = document.getElementById("todos");
-        todosElement.innerHTML = todosResponse.todos
-          .map(todo => `<div>${todo.task} - ${todo.done ? "✔" : "✘"}</div>`)
-          .join("");
-      }
-    });
-
-    loadPublicTodos();
-  </script>
+        document.getElementById('connectBtn').addEventListener('click', connectToServer);
+    </script>
 </body>
 </html>
