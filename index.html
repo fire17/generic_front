@@ -1,126 +1,109 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Glassmorphic Todo App</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background: linear-gradient(135deg, rgba(58,123,213,1) 0%, rgba(58,96,214,0.8) 100%);
-            height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0;
-        }
-        .container {
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 16px;
-            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            padding: 20px;
-            max-width: 400px;
-            width: 100%;
-            color: white;
-        }
-        .todo-list {
-            list-style: none;
-            padding: 0;
-            margin: 10px 0;
-        }
-        .todo-item {
-            background: rgba(255, 255, 255, 0.2);
-            padding: 10px;
-            border-radius: 8px;
-            margin-bottom: 10px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .todo-item span {
-            flex: 1;
-        }
-        .btn {
-            cursor: pointer;
-            border: none;
-            border-radius: 8px;
-            padding: 5px 10px;
-            color: white;
-            background: #5A67D8;
-            transition: background 0.3s;
-        }
-        .btn:hover {
-            background: #434190;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Todo App with DXOS</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: rgba(255, 255, 255, 0.6);
+      backdrop-filter: blur(10px);
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0;
+    }
+    #app {
+      width: 90%;
+      max-width: 400px;
+      background: rgba(255, 255, 255, 0.8);
+      border-radius: 15px;
+      padding: 20px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    }
+    #log, #monitor {
+      background: #f8f8f8;
+      border: 1px solid #ddd;
+      padding: 10px;
+      margin-bottom: 10px;
+      height: 100px;
+      overflow-y: scroll;
+    }
+    form input, form button {
+      width: 100%;
+      padding: 10px;
+      margin: 5px 0;
+    }
+    #todos {
+      margin-top: 15px;
+    }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <h2>Todo App</h2>
-        <form id="todoForm">
-            <input type="text" id="todoInput" placeholder="Enter a new todo" required />
-            <button type="submit" class="btn">Add</button>
-        </form>
-        <ul class="todo-list" id="todoList"></ul>
-    </div>
+  <div id="app">
+    <div id="log"></div>
+    <div id="monitor"></div>
+    <form id="loginForm">
+      <input type="text" id="username" placeholder="Username" required />
+      <input type="password" id="password" placeholder="Password" required />
+      <button type="submit">Login</button>
+    </form>
+    <div id="todos"></div>
+  </div>
 
-    <script>
-        const apiUrl = 'https://backend.akeyo.io/index.html'; // Simulated backend
+  <script type="module">
+    import { Client } from 'https://cdn.jsdelivr.net/npm/@dxos/client';
 
-        const todoList = document.getElementById('todoList');
-        const todoForm = document.getElementById('todoForm');
-        const todoInput = document.getElementById('todoInput');
+    const backendURL = "https://backend.akeyo.io";
+    const dxosClient = new Client();
+    const monitorElement = document.getElementById("monitor");
 
-        // Fetch todos
-        async function fetchTodos() {
-            console.log("Fetching todos from backend...");
-            const response = await fetch(`${apiUrl}?action=getTodos&callback=jsonpHandler`, { mode: 'no-cors' });
-            const script = document.createElement('script');
-            script.src = `${apiUrl}?action=getTodos&callback=jsonpHandler`;
-            document.body.appendChild(script);
-        }
+    const log = (message) => {
+      const logElement = document.getElementById("log");
+      logElement.innerHTML += `<div>${message}</div>`;
+      logElement.scrollTop = logElement.scrollHeight;
+    };
 
-        // JSONP handler
-        function jsonpHandler(data) {
-            console.log("Todos fetched:", data);
-            renderTodos(data);
-        }
+    const fetchBackend = async (endpoint, params = {}) => {
+      try {
+        const url = new URL(backendURL);
+        url.search = new URLSearchParams({ endpoint, ...params }).toString();
 
-        // Add new todo
-        function addTodo(todoText) {
-            console.log(`Adding new todo: ${todoText}`);
-            const script = document.createElement('script');
-            script.src = `${apiUrl}?action=addTodo&text=${encodeURIComponent(todoText)}&callback=jsonpHandler`;
-            document.body.appendChild(script);
-        }
+        const response = await fetch(url);
+        const data = await response.json();
 
-        // Render todos
-        function renderTodos(todos) {
-            todoList.innerHTML = '';
-            todos.forEach((todo, index) => {
-                const li = document.createElement('li');
-                li.className = 'todo-item';
-                li.innerHTML = `
-                    <span>${todo.text}</span>
-                `;
-                todoList.appendChild(li);
-            });
-        }
+        log(`Endpoint: ${endpoint}, Response: ${JSON.stringify(data)}`);
+        return data;
+      } catch (error) {
+        log(`Error: ${error.message}`);
+        return null;
+      }
+    };
 
-        // Handle form submission
-        todoForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            const todoText = todoInput.value.trim();
-            if (todoText) {
-                addTodo(todoText);
-                todoInput.value = '';
-            }
-        });
+    const setupDXOS = async () => {
+      await dxosClient.initialize();
+      await dxosClient.halo.createIdentity();
+      monitorElement.innerHTML = `<div>DXOS initialized with ID: ${dxosClient.halo.identityKey}</div>`;
+    };
 
-        // Initial fetch
-        fetchTodos();
-    </script>
+    document.getElementById("loginForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const username = document.getElementById("username").value;
+      const password = document.getElementById("password").value;
+
+      const loginResponse = await fetchBackend("login", { username, password });
+      if (loginResponse && loginResponse.success) {
+        const todosResponse = await fetchBackend("todos", { userId: loginResponse.user.id });
+        const todosElement = document.getElementById("todos");
+        todosElement.innerHTML = todosResponse.todos
+          .map(todo => `<div>${todo.task} - ${todo.done ? "✔" : "✘"}</div>`)
+          .join("");
+      }
+    });
+
+    setupDXOS();
+  </script>
 </body>
 </html>
